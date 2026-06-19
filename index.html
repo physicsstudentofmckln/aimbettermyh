@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Newton's Second Law</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #132247 0%, #0b1120 50%, #050b16 100%);
+        color: #e2e8f0;
+        font-family: Inter, "Segoe UI", Roboto, sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      input[type="range"] {
+        appearance: none;
+        width: 100%;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        background: linear-gradient(90deg, #1e293b, #334155);
+        border-radius: 9999px;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        margin-top: -5px;
+        border-radius: 9999px;
+        background: #f59e0b;
+        cursor: pointer;
+      }
+      input[type="range"]::-moz-range-track {
+        height: 6px;
+        background: linear-gradient(90deg, #1e293b, #334155);
+        border-radius: 9999px;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border: none;
+        border-radius: 9999px;
+        background: #f59e0b;
+        cursor: pointer;
+      }
+      .app-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      .panel {
+        background: rgba(2, 6, 23, 0.78);
+        border: 1px solid #1e293b;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+      .tab-row {
+        display: flex;
+        gap: 8px;
+        padding: 16px 16px 0;
+      }
+      .tab-btn {
+        background: #0f172a;
+        color: #cbd5e1;
+        border: 1px solid #1e293b;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tab-btn.active {
+        background: #1d4ed8;
+        color: #eff6ff;
+      }
+      .sim-area {
+        position: relative;
+        height: 48vh;
+        min-height: 360px;
+        background:
+          linear-gradient(rgba(15, 23, 42, 0.18) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(15, 23, 42, 0.18) 1px, transparent 1px),
+          linear-gradient(180deg, #0a1226 0%, #0b1120 100%);
+        background-size: 24px 24px, 24px 24px, auto;
+        overflow: hidden;
+      }
+      .top-right-tag {
+        position: absolute;
+        right: 18px;
+        top: 14px;
+        border: 1px solid #334155;
+        background: rgba(15, 23, 42, 0.75);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-family: "Times New Roman", serif;
+        font-size: 1.1rem;
+      }
+      .stats-bar {
+        position: absolute;
+        left: 18px;
+        top: 14px;
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: #cbd5e1;
+      }
+      .title-text {
+        position: absolute;
+        left: 18px;
+        top: 52px;
+        text-transform: uppercase;
+        letter-spacing: 0.35em;
+        font-size: 11px;
+        color: #64748b;
+      }
+      .block {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        width: 110px;
+        height: 80px;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(180deg, #60a5fa, #2563eb);
+        border: 1px solid rgba(191, 219, 254, 0.5);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+        z-index: 5;
+      }
+      .block span {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-weight: 700;
+      }
+      .motion-label {
+        position: absolute;
+        left: 50%;
+        top: 73%;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.8);
+        color: #cbd5e1;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+      }
+      .footnote {
+        position: absolute;
+        right: 18px;
+        bottom: 14px;
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+      .controls-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        padding: 16px;
+      }
+      .control-card,
+      .metric-card,
+      .graph-card,
+      .fbd-card {
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .control-header,
+      .metric-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: #94a3b8;
+      }
+      .metric-value {
+        margin-top: 6px;
+        font-family: monospace;
+        font-size: 1.2rem;
+      }
+      .button-row {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 16px;
+      }
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-play { background: #10b981; color: #0f172a; }
+      .btn-pause { background: #334155; color: #e2e8f0; }
+      .btn-reset { background: #0f172a; color: #e2e8f0; }
+      .metrics-row {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 0 16px 16px;
+      }
+      .graph-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 0 16px 16px;
+      }
+      .fbd-panel {
+        padding: 0 16px 16px;
+      }
+      .fbd-canvas,
+      canvas {
+        width: 100%;
+        height: 180px;
+        display: block;
+      }
+      .fbd-canvas {
+        height: 260px;
+      }
+      #incline-canvas {
+        height: 100%;
+      }
+      @media (max-width: 768px) {
+        .controls-grid,
+        .metrics-row,
+        .graph-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="panel">
+        <div class="tab-row">
+          <button class="tab-btn active" data-tab="horizontal">Horizontal Surface</button>
+          <button class="tab-btn" data-tab="incline">Inclined Plane</button>
+        </div>
+
+        <section class="tab-panel" data-panel="horizontal">
+          <section class="sim-area">
+            <div class="stats-bar">
+              <span id="net-force">F(net) = 0.0 N</span>
+              <span id="mass-stat">m = 0.0 kg</span>
+              <span id="accel-stat">a = 0.00 m/s²</span>
+            </div>
+            <div class="top-right-tag">F = ma</div>
+            <div class="title-text">Newton's Second Law</div>
+            <div class="block" id="block"><span>m</span></div>
+            <div class="motion-label" id="motion-label">Fnet = 0.0 N · a = 0.00 m/s²</div>
+            <div class="footnote">
+              <span id="velocity-text">v = 0.00 m/s</span>
+              <span id="position-text">x = 0.00 m</span>
+              <span id="time-text">t = 0.00 s</span>
+            </div>
+          </section>
+
+          <section class="controls-grid">
+            <div class="control-card">
+              <div class="control-header"><span>Applied Force</span><span id="force-readout">18.0</span></div>
+              <input id="force-slider" type="range" min="-200" max="200" step="0.5" value="18" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Mass</span><span id="mass-readout">4.0</span></div>
+              <input id="mass-slider" type="range" min="1" max="100" step="0.1" value="4" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Friction</span><span id="friction-readout">6.0</span></div>
+              <input id="friction-slider" type="range" min="0" max="30" step="0.5" value="6" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Acceleration</span><span id="acceleration-readout">3.0</span></div>
+              <input id="acceleration-slider" type="range" min="-20" max="20" step="0.1" value="3" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Time</span><span id="time-readout">1.0</span></div>
+              <input id="time-slider" type="range" min="0.1" max="15" step="0.1" value="1" />
+            </div>
+          </section>
+
+          <div class="button-row">
+            <button class="btn-play" id="play-btn">Play</button>
+            <button class="btn-pause" id="pause-btn">Pause</button>
+            <button class="btn-reset" id="reset-btn">Reset</button>
+          </div>
+
+          <section class="metrics-row">
+            <div class="metric-card"><div class="metric-label">Fnet</div><div class="metric-value" id="fnet-metric">0.00 N</div></div>
+            <div class="metric-card"><div class="metric-label">mass</div><div class="metric-value" id="mass-metric">0.00 kg</div></div>
+            <div class="metric-card"><div class="metric-label">accel</div><div class="metric-value" id="accel-metric">0.00 m/s²</div></div>
+          </section>
+
+          <section class="fbd-panel">
+            <div class="fbd-card">
+              <div class="metric-label">Free Body Diagram</div>
+              <canvas id="fbd-canvas" class="fbd-canvas"></canvas>
+            </div>
+          </section>
+
+          <section class="graph-grid">
+            <div class="graph-card"><div class="metric-label">s/t</div><canvas id="graph-s"></canvas></div>
+            <div class="graph-card"><div class="metric-label">v/t</div><canvas id="graph-v"></canvas></div>
+            <div class="graph-card"><div class="metric-label">a/t</div><canvas id="graph-a"></canvas></div>
+            <div class="graph-card"><div class="metric-label">F/t</div><canvas id="graph-f"></canvas></div>
+          </section>
+        </section>
+
+        <section class="tab-panel" data-panel="incline" style="display:none;">
+          <section class="sim-area">
+            <canvas id="incline-canvas"></canvas>
+          </section>
+
+          <section class="controls-grid">
+            <div class="control-card">
+              <div class="control-header"><span>Mass</span><span id="incline-mass-readout">4.0</span></div>
+              <input id="incline-mass-slider" type="range" min="1" max="100" step="0.1" value="4" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Angle θ</span><span id="incline-angle-readout">30°</span></div>
+              <input id="incline-angle-slider" type="range" min="0" max="89" step="1" value="30" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Tension</span><span id="incline-tension-readout">0.0</span></div>
+              <input id="incline-tension-slider" type="range" min="0" max="200" step="0.5" value="0" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>μk</span><span id="incline-mu-readout">0.20</span></div>
+              <input id="incline-mu-slider" type="range" min="0" max="1" step="0.01" value="0.2" />
+            </div>
+            <div class="control-card">
+              <div class="control-header"><span>Time</span><span id="incline-time-readout">1.0</span></div>
+              <input id="incline-time-slider" type="range" min="0.1" max="15" step="0.1" value="1" />
+            </div>
+          </section>
+
+          <div class="button-row">
+            <button class="btn-play" id="incline-play-btn">Play</button>
+            <button class="btn-pause" id="incline-pause-btn">Pause</button>
+            <button class="btn-reset" id="incline-reset-btn">Reset</button>
+          </div>
+
+          <section class="metrics-row">
+            <div class="metric-card"><div class="metric-label">N</div><div class="metric-value" id="incline-normal-readout">0.00 N</div></div>
+            <div class="metric-card"><div class="metric-label">Fparallel</div><div class="metric-value" id="incline-parallel-readout">0.00 N</div></div>
+            <div class="metric-card"><div class="metric-label">a</div><div class="metric-value" id="incline-accel-readout">0.00 m/s²</div></div>
+          </section>
+
+          <section class="fbd-panel">
+            <div class="fbd-card">
+              <div class="metric-label">Free Body Diagram</div>
+              <canvas id="incline-fbd-canvas" class="fbd-canvas"></canvas>
+            </div>
+          </section>
+
+          <section class="graph-grid">
+            <div class="graph-card"><div class="metric-label">s/t</div><canvas id="incline-graph-s"></canvas></div>
+            <div class="graph-card"><div class="metric-label">v/t</div><canvas id="incline-graph-v"></canvas></div>
+            <div class="graph-card"><div class="metric-label">a/t</div><canvas id="incline-graph-a"></canvas></div>
+            <div class="graph-card"><div class="metric-label">F/t</div><canvas id="incline-graph-f"></canvas></div>
+          </section>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+      const state = {
+        activeTab: 'horizontal',
+        horizontal: {
+          appliedForce: 18,
+          mass: 4,
+          frictionForce: 6,
+          customAcceleration: 3,
+          targetTime: 1,
+          time: 0,
+          position: 0,
+          velocity: 0,
+          acceleration: 0,
+          netForce: 0,
+          isPlaying: false,
+          history: []
+        },
+        incline: {
+          mass: 4,
+          angle: 30,
+          tension: 0,
+          frictionCoeff: 0.2,
+          targetTime: 1,
+          time: 0,
+          position: 0,
+          velocity: 0,
+          acceleration: 0,
+          netForce: 0,
+          isPlaying: false,
+          history: []
+        }
+      };
+      const maxHistory = 180;
+      let horizontalFrame = 0;
+      let inclineFrame = 0;
+      let lastHorizontalFrame = 0;
+      let lastInclineFrame = 0;
+
+      tabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const next = button.dataset.tab;
+          state.activeTab = next;
+          tabButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
+          tabPanels.forEach((panel) => {
+            panel.style.display = panel.dataset.panel === next ? 'block' : 'none';
+          });
+        });
+      });
+
+      const block = document.getElementById('block');
+      const forceSlider = document.getElementById('force-slider');
+      const massSlider = document.getElementById('mass-slider');
+      const frictionSlider = document.getElementById('friction-slider');
+      const accelerationSlider = document.getElementById('acceleration-slider');
+      const timeSlider = document.getElementById('time-slider');
+      const forceReadout = document.getElementById('force-readout');
+      const massReadout = document.getElementById('mass-readout');
+      const frictionReadout = document.getElementById('friction-readout');
+      const accelerationReadout = document.getElementById('acceleration-readout');
+      const timeReadout = document.getElementById('time-readout');
+      const netForceText = document.getElementById('net-force');
+      const massStat = document.getElementById('mass-stat');
+      const accelStat = document.getElementById('accel-stat');
+      const motionLabel = document.getElementById('motion-label');
+      const velocityText = document.getElementById('velocity-text');
+      const positionText = document.getElementById('position-text');
+      const timeText = document.getElementById('time-text');
+      const fnetMetric = document.getElementById('fnet-metric');
+      const massMetric = document.getElementById('mass-metric');
+      const accelMetric = document.getElementById('accel-metric');
+      const playBtn = document.getElementById('play-btn');
+      const pauseBtn = document.getElementById('pause-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const graphEls = {
+        s: document.getElementById('graph-s'),
+        v: document.getElementById('graph-v'),
+        a: document.getElementById('graph-a'),
+        f: document.getElementById('graph-f')
+      };
+      const fbdCanvas = document.getElementById('fbd-canvas');
+
+      function computeHorizontalValues() {
+        const h = state.horizontal;
+        const safeMass = Math.max(h.mass, 0.1);
+        const forceSign = h.appliedForce >= 0 ? 1 : -1;
+        const frictionBound = Math.min(h.frictionForce, Math.abs(h.appliedForce));
+        const derivedNetForce = h.appliedForce - forceSign * frictionBound;
+        const derivedAcceleration = derivedNetForce / safeMass;
+        h.netForce = derivedNetForce;
+        h.acceleration = h.customAcceleration;
+        if (!Number.isFinite(h.acceleration)) {
+          h.acceleration = derivedAcceleration;
+        }
+        return { safeMass, frictionBound, derivedAcceleration };
+      }
+
+      function updateHorizontalUI() {
+        const h = state.horizontal;
+        const { safeMass, frictionBound } = computeHorizontalValues();
+        forceReadout.textContent = h.appliedForce.toFixed(1);
+        massReadout.textContent = h.mass.toFixed(1);
+        frictionReadout.textContent = frictionBound.toFixed(1);
+        accelerationReadout.textContent = h.customAcceleration.toFixed(1);
+        timeReadout.textContent = h.targetTime.toFixed(1);
+        netForceText.textContent = `F(net) = ${h.netForce.toFixed(1)} N`;
+        massStat.textContent = `m = ${safeMass.toFixed(1)} kg`;
+        accelStat.textContent = `a = ${h.acceleration.toFixed(2)} m/s²`;
+        motionLabel.textContent = `Fnet = ${h.netForce.toFixed(1)} N · a = ${h.acceleration.toFixed(2)} m/s²`;
+        velocityText.textContent = `v = ${h.velocity.toFixed(2)} m/s`;
+        positionText.textContent = `x = ${h.position.toFixed(2)} m`;
+        timeText.textContent = `t = ${h.time.toFixed(2)} s`;
+        fnetMetric.textContent = `${h.netForce.toFixed(2)} N`;
+        massMetric.textContent = `${safeMass.toFixed(2)} kg`;
+        accelMetric.textContent = `${h.acceleration.toFixed(2)} m/s²`;
+        const leftPercent = clamp(50 + h.position * 1.6, 18, 78);
+        block.style.left = `${leftPercent}%`;
+        drawHorizontalGraphs();
+      }
+
+      function resetHorizontalSimulation() {
+        const h = state.horizontal;
+        h.isPlaying = false;
+        h.time = 0;
+        h.position = 0;
+        h.velocity = 0;
+        h.history = [];
+        if (horizontalFrame) cancelAnimationFrame(horizontalFrame);
+        horizontalFrame = 0;
+        lastHorizontalFrame = 0;
+        updateHorizontalUI();
+      }
+
+      function pushHorizontalHistory() {
+        const h = state.horizontal;
+        h.history.push({
+          time: h.time,
+          s: h.position,
+          v: h.velocity,
+          a: h.acceleration,
+          F: h.netForce
+        });
+        if (h.history.length > maxHistory) h.history.shift();
+      }
+
+      function drawGraph(canvas, values, color, label) {
+        const ctx = canvas.getContext('2d');
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= 10; x++) {
+          const px = (x / 10) * width;
+          ctx.moveTo(px, 0);
+          ctx.lineTo(px, height);
+        }
+        for (let y = 0; y <= 6; y++) {
+          const py = (y / 6) * height;
+          ctx.moveTo(0, py);
+          ctx.lineTo(width, py);
+        }
+        ctx.stroke();
+        if (!values.length) return;
+        const maxValue = Math.max(...values.map((v) => Math.abs(v)), 1);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        values.forEach((value, index) => {
+          const x = (index / Math.max(values.length - 1, 1)) * width;
+          const y = height - (value / maxValue) * (height * 0.8) - height * 0.1;
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(label, 8, 14);
+      }
+
+      function drawFBD() {
+        const ctx = fbdCanvas.getContext('2d');
+        const width = fbdCanvas.clientWidth;
+        const height = fbdCanvas.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        fbdCanvas.width = Math.round(width * dpr);
+        fbdCanvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const boxWidth = 140;
+        const boxHeight = 80;
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(centerX - boxWidth / 2, centerY - boxHeight / 2, boxWidth, boxHeight);
+        const { safeMass, frictionBound } = computeHorizontalValues();
+        const appliedForce = state.horizontal.appliedForce;
+        const frictionForce = frictionBound;
+        const netForce = state.horizontal.netForce;
+        const maxMagnitude = Math.max(Math.abs(appliedForce), Math.abs(frictionForce), Math.abs(netForce), 1);
+        const forceScale = Math.min(70 / maxMagnitude, 1.4);
+        const drawArrow = (x1, y1, x2, y2, color, label) => {
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          const angle = Math.atan2(y2 - y1, x2 - x1);
+          const arrowSize = 10;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
+          ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(label, x2 + 6, y2 - 6);
+        };
+        const appliedLength = Math.abs(appliedForce) * forceScale;
+        const frictionLength = Math.abs(frictionForce) * forceScale;
+        const netLength = Math.abs(netForce) * forceScale;
+        const leftX = centerX - boxWidth / 2;
+        const rightX = centerX + boxWidth / 2;
+        const topY = centerY - boxHeight / 2;
+        const bottomY = centerY + boxHeight / 2;
+        if (appliedForce !== 0) {
+          const appliedDir = appliedForce > 0 ? -1 : 1;
+          drawArrow(leftX, centerY, leftX + appliedDir * Math.min(Math.abs(appliedLength), 80), centerY, '#06b6d4', `F = ${appliedForce.toFixed(1)}`);
+        }
+        if (frictionForce !== 0) {
+          drawArrow(rightX, centerY, rightX + Math.min(frictionLength, 80), centerY, '#f97316', `f = ${frictionForce.toFixed(1)}`);
+        }
+        drawArrow(centerX, bottomY, centerX, bottomY + Math.min(60, 0.8 * 60), '#cbd5e1', `N = ${safeMass.toFixed(1)} g`);
+        drawArrow(centerX, topY, centerX, topY - Math.min(60, 0.8 * 60), '#94a3b8', `W = ${(safeMass * 9.8).toFixed(1)}`);
+        if (netForce !== 0) {
+          const netDirection = netForce > 0 ? -1 : 1;
+          drawArrow(centerX, centerY, centerX + netDirection * Math.min(netLength, 70), centerY, '#22c55e', `Fnet = ${netForce.toFixed(1)}`);
+        }
+      }
+
+      function drawHorizontalGraphs() {
+        const points = state.horizontal.history;
+        drawGraph(graphEls.s, points.map((p) => p.s), '#38bdf8', 's');
+        drawGraph(graphEls.v, points.map((p) => p.v), '#22c55e', 'v');
+        drawGraph(graphEls.a, points.map((p) => p.a), '#86efac', 'a');
+        drawGraph(graphEls.f, points.map((p) => p.F), '#f97316', 'F');
+        drawFBD();
+      }
+
+      function animateHorizontal(timestamp) {
+        const h = state.horizontal;
+        if (!h.isPlaying) return;
+        if (!lastHorizontalFrame) lastHorizontalFrame = timestamp;
+        const dt = Math.min((timestamp - lastHorizontalFrame) / 1000, 0.03);
+        lastHorizontalFrame = timestamp;
+        computeHorizontalValues();
+        if (h.time >= h.targetTime) {
+          h.isPlaying = false;
+          if (horizontalFrame) cancelAnimationFrame(horizontalFrame);
+          horizontalFrame = 0;
+          updateHorizontalUI();
+          return;
+        }
+        const step = Math.min(dt, Math.max(h.targetTime - h.time, 0));
+        h.time += step;
+        h.velocity += h.acceleration * step;
+        h.position += h.velocity * step;
+        pushHorizontalHistory();
+        updateHorizontalUI();
+        horizontalFrame = requestAnimationFrame(animateHorizontal);
+      }
+
+      playBtn.addEventListener('click', () => {
+        state.horizontal.isPlaying = true;
+        if (!horizontalFrame) {
+          lastHorizontalFrame = 0;
+          horizontalFrame = requestAnimationFrame(animateHorizontal);
+        }
+      });
+      pauseBtn.addEventListener('click', () => { state.horizontal.isPlaying = false; });
+      resetBtn.addEventListener('click', resetHorizontalSimulation);
+      forceSlider.addEventListener('input', (e) => { state.horizontal.appliedForce = Number(e.target.value); updateHorizontalUI(); });
+      massSlider.addEventListener('input', (e) => { state.horizontal.mass = Number(e.target.value); updateHorizontalUI(); });
+      frictionSlider.addEventListener('input', (e) => { state.horizontal.frictionForce = Number(e.target.value); updateHorizontalUI(); });
+      accelerationSlider.addEventListener('input', (e) => { state.horizontal.customAcceleration = Number(e.target.value); updateHorizontalUI(); });
+      timeSlider.addEventListener('input', (e) => { state.horizontal.targetTime = Number(e.target.value); updateHorizontalUI(); });
+
+      const inclineCanvas = document.getElementById('incline-canvas');
+      const inclineFbdCanvas = document.getElementById('incline-fbd-canvas');
+      const inclineMassSlider = document.getElementById('incline-mass-slider');
+      const inclineAngleSlider = document.getElementById('incline-angle-slider');
+      const inclineTensionSlider = document.getElementById('incline-tension-slider');
+      const inclineMuSlider = document.getElementById('incline-mu-slider');
+      const inclineTimeSlider = document.getElementById('incline-time-slider');
+      const inclineMassReadout = document.getElementById('incline-mass-readout');
+      const inclineAngleReadout = document.getElementById('incline-angle-readout');
+      const inclineTensionReadout = document.getElementById('incline-tension-readout');
+      const inclineMuReadout = document.getElementById('incline-mu-readout');
+      const inclineTimeReadout = document.getElementById('incline-time-readout');
+      const inclineNormalReadout = document.getElementById('incline-normal-readout');
+      const inclineParallelReadout = document.getElementById('incline-parallel-readout');
+      const inclineAccelReadout = document.getElementById('incline-accel-readout');
+      const inclinePlayBtn = document.getElementById('incline-play-btn');
+      const inclinePauseBtn = document.getElementById('incline-pause-btn');
+      const inclineResetBtn = document.getElementById('incline-reset-btn');
+      const inclineGraphEls = {
+        s: document.getElementById('incline-graph-s'),
+        v: document.getElementById('incline-graph-v'),
+        a: document.getElementById('incline-graph-a'),
+        f: document.getElementById('incline-graph-f')
+      };
+
+      function computeInclineValues() {
+        const i = state.incline;
+        const safeMass = Math.max(i.mass, 0.1);
+        const theta = (i.angle * Math.PI) / 180;
+        const g = 9.8;
+        const normal = safeMass * g * Math.cos(theta);
+        const gravityDown = safeMass * g * Math.sin(theta);
+        const friction = i.frictionCoeff * normal;
+        const netForce = i.tension - gravityDown - friction;
+        const acceleration = netForce / safeMass;
+        i.netForce = netForce;
+        i.acceleration = acceleration;
+        return { safeMass, theta, normal, gravityDown, friction, netForce, acceleration };
+      }
+
+      function drawInclineCanvas() {
+        const ctx = inclineCanvas.getContext('2d');
+        const width = inclineCanvas.clientWidth;
+        const height = inclineCanvas.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        inclineCanvas.width = Math.round(width * dpr);
+        inclineCanvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        const { theta } = computeInclineValues();
+        const baseY = height * 0.78;
+        const baseX = width * 0.1;
+        const rampLength = width * 0.64;
+        const rampHeight = Math.tan(theta) * rampLength;
+        const topX = baseX + rampLength;
+        const topY = baseY - rampHeight;
+        const gradient = ctx.createLinearGradient(baseX, baseY, topX, topY);
+        gradient.addColorStop(0, '#9ca3af');
+        gradient.addColorStop(1, '#4b5563');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(topX, topY);
+        ctx.lineTo(baseX + rampLength, baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        const arcRadius = 56;
+        const arcCenterX = baseX + rampLength - 18;
+        const arcCenterY = baseY - 8;
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(arcCenterX, arcCenterY, arcRadius, Math.PI - theta, Math.PI, false);
+        ctx.stroke();
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '16px sans-serif';
+        ctx.fillText('θ', arcCenterX - 18, arcCenterY - 22);
+        const blockWidth = 72;
+        const blockHeight = 44;
+        const along = clamp(state.incline.position / Math.max(1, rampLength * 1.2), 0, 1);
+        const blockX = baseX + along * rampLength;
+        const blockY = baseY - along * rampHeight;
+        ctx.save();
+        ctx.translate(blockX, blockY);
+        ctx.rotate(-theta);
+        const fill = ctx.createLinearGradient(-blockWidth / 2, -blockHeight / 2, blockWidth / 2, blockHeight / 2);
+        fill.addColorStop(0, '#60a5fa');
+        fill.addColorStop(1, '#2563eb');
+        ctx.fillStyle = fill;
+        ctx.fillRect(-blockWidth / 2, -blockHeight / 2, blockWidth, blockHeight);
+        ctx.strokeStyle = 'rgba(191,219,254,0.45)';
+        ctx.strokeRect(-blockWidth / 2, -blockHeight / 2, blockWidth, blockHeight);
+        ctx.restore();
+      }
+
+      function drawInclineFBD() {
+        const ctx = inclineFbdCanvas.getContext('2d');
+        const width = inclineFbdCanvas.clientWidth;
+        const height = inclineFbdCanvas.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        inclineFbdCanvas.width = Math.round(width * dpr);
+        inclineFbdCanvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        const { theta, normal, gravityDown, friction, netForce } = computeInclineValues();
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const boxWidth = 120;
+        const boxHeight = 64;
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(centerX - boxWidth / 2, centerY - boxHeight / 2, boxWidth, boxHeight);
+        const drawArrow = (x1, y1, x2, y2, color, label) => {
+          ctx.strokeStyle = color;
+          ctx.fillStyle = color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          const angle = Math.atan2(y2 - y1, x2 - x1);
+          const arrowSize = 9;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - arrowSize * Math.cos(angle - Math.PI / 6), y2 - arrowSize * Math.sin(angle - Math.PI / 6));
+          ctx.lineTo(x2 - arrowSize * Math.cos(angle + Math.PI / 6), y2 - arrowSize * Math.sin(angle + Math.PI / 6));
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#e2e8f0';
+          ctx.font = '11px sans-serif';
+          ctx.fillText(label, x2 + 6, y2 - 6);
+        };
+        const maxMag = Math.max(Math.abs(gravityDown), Math.abs(friction), Math.abs(normal), Math.abs(netForce), 1);
+        const scale = Math.min(1, 58 / maxMag);
+        const slopeX = Math.cos(theta);
+        const slopeY = Math.sin(theta);
+        const perpX = -Math.sin(theta);
+        const perpY = Math.cos(theta);
+        const shift = 18;
+        const gravityLength = Math.min(Math.abs(gravityDown) * scale * 0.75, 54);
+        const componentLength = Math.min(Math.abs(gravityDown) * scale, 54);
+        const normalLength = Math.min(normal * scale, 68);
+        const tensionLength = Math.min(Math.abs(state.incline.tension) * scale, 68);
+        drawArrow(centerX, centerY, centerX, centerY + gravityLength, '#f8fafc', `mg = ${(state.incline.mass * 9.8).toFixed(1)}`);
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + slopeX * componentLength, centerY + slopeY * componentLength);
+        ctx.stroke();
+        ctx.fillStyle = '#f97316';
+        ctx.fillText('mg sinθ', centerX + slopeX * componentLength + 6, centerY + slopeY * componentLength + 4);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + perpX * componentLength, centerY + perpY * componentLength);
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('mg cosθ', centerX + perpX * componentLength + 6, centerY + perpY * componentLength - 4);
+        ctx.setLineDash([]);
+        drawArrow(centerX + perpX * shift, centerY + perpY * shift, centerX + perpX * (shift + normalLength), centerY + perpY * (shift + normalLength), '#22c55e', 'N');
+        if (state.incline.tension > 0) {
+          drawArrow(centerX - slopeX * shift, centerY - slopeY * shift, centerX - slopeX * (shift + tensionLength), centerY - slopeY * (shift + tensionLength), '#ef4444', 'T');
+        }
+      }
+
+      function drawInclineGraphs() {
+        const points = state.incline.history;
+        drawGraph(inclineGraphEls.s, points.map((p) => p.s), '#38bdf8', 's');
+        drawGraph(inclineGraphEls.v, points.map((p) => p.v), '#22c55e', 'v');
+        drawGraph(inclineGraphEls.a, points.map((p) => p.a), '#86efac', 'a');
+        drawGraph(inclineGraphEls.f, points.map((p) => p.F), '#f97316', 'F');
+      }
+
+      function updateInclineUI() {
+        const i = state.incline;
+        const { normal, gravityDown, acceleration } = computeInclineValues();
+        inclineMassReadout.textContent = i.mass.toFixed(1);
+        inclineAngleReadout.textContent = `${i.angle.toFixed(0)}°`;
+        inclineTensionReadout.textContent = i.tension.toFixed(1);
+        inclineMuReadout.textContent = i.frictionCoeff.toFixed(2);
+        inclineTimeReadout.textContent = i.targetTime.toFixed(1);
+        inclineNormalReadout.textContent = `${normal.toFixed(2)} N`;
+        inclineParallelReadout.textContent = `${gravityDown.toFixed(2)} N`;
+        inclineAccelReadout.textContent = `${acceleration.toFixed(2)} m/s²`;
+        drawInclineCanvas();
+        drawInclineFBD();
+        drawInclineGraphs();
+      }
+
+      function pushInclineHistory() {
+        const i = state.incline;
+        i.history.push({
+          time: i.time,
+          s: i.position,
+          v: i.velocity,
+          a: i.acceleration,
+          F: i.netForce
+        });
+        if (i.history.length > maxHistory) i.history.shift();
+      }
+
+      function resetInclineSimulation() {
+        const i = state.incline;
+        i.isPlaying = false;
+        i.time = 0;
+        i.position = 0;
+        i.velocity = 0;
+        i.history = [];
+        if (inclineFrame) cancelAnimationFrame(inclineFrame);
+        inclineFrame = 0;
+        lastInclineFrame = 0;
+        updateInclineUI();
+      }
+
+      function animateIncline(timestamp) {
+        const i = state.incline;
+        if (!i.isPlaying) return;
+        if (!lastInclineFrame) lastInclineFrame = timestamp;
+        const dt = Math.min((timestamp - lastInclineFrame) / 1000, 0.03);
+        lastInclineFrame = timestamp;
+        const { acceleration, netForce } = computeInclineValues();
+        i.acceleration = acceleration;
+        i.netForce = netForce;
+        if (i.time >= i.targetTime) {
+          i.isPlaying = false;
+          if (inclineFrame) cancelAnimationFrame(inclineFrame);
+          inclineFrame = 0;
+          updateInclineUI();
+          return;
+        }
+        const step = Math.min(dt, Math.max(i.targetTime - i.time, 0));
+        i.time += step;
+        i.velocity += i.acceleration * step;
+        i.position += i.velocity * step;
+        pushInclineHistory();
+        updateInclineUI();
+        inclineFrame = requestAnimationFrame(animateIncline);
+      }
+
+      inclineMassSlider.addEventListener('input', (e) => { state.incline.mass = Number(e.target.value); updateInclineUI(); });
+      inclineAngleSlider.addEventListener('input', (e) => { state.incline.angle = Number(e.target.value); updateInclineUI(); });
+      inclineTensionSlider.addEventListener('input', (e) => { state.incline.tension = Number(e.target.value); updateInclineUI(); });
+      inclineMuSlider.addEventListener('input', (e) => { state.incline.frictionCoeff = Number(e.target.value); updateInclineUI(); });
+      inclineTimeSlider.addEventListener('input', (e) => { state.incline.targetTime = Number(e.target.value); updateInclineUI(); });
+      inclinePlayBtn.addEventListener('click', () => {
+        state.incline.isPlaying = true;
+        if (!inclineFrame) {
+          lastInclineFrame = 0;
+          inclineFrame = requestAnimationFrame(animateIncline);
+        }
+      });
+      inclinePauseBtn.addEventListener('click', () => { state.incline.isPlaying = false; });
+      inclineResetBtn.addEventListener('click', resetInclineSimulation);
+
+      window.addEventListener('resize', () => {
+        updateHorizontalUI();
+        updateInclineUI();
+      });
+
+      computeHorizontalValues();
+      updateHorizontalUI();
+      updateInclineUI();
+    </script>
+  </body>
+</html>
