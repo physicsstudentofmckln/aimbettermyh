@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Newton's Second Law</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #132247 0%, #0b1120 50%, #050b16 100%);
+        color: #e2e8f0;
+        font-family: Inter, "Segoe UI", Roboto, sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      input[type="range"] {
+        appearance: none;
+        width: 100%;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        background: linear-gradient(90deg, #1e293b, #334155);
+        border-radius: 9999px;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        margin-top: -5px;
+        border-radius: 9999px;
+        background: #f59e0b;
+        cursor: pointer;
+      }
+      input[type="range"]::-moz-range-track {
+        height: 6px;
+        background: linear-gradient(90deg, #1e293b, #334155);
+        border-radius: 9999px;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border: none;
+        border-radius: 9999px;
+        background: #f59e0b;
+        cursor: pointer;
+      }
+      .app-shell {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+      .panel {
+        background: rgba(2, 6, 23, 0.75);
+        border: 1px solid #1e293b;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+      .sim-area {
+        position: relative;
+        height: 48vh;
+        min-height: 360px;
+        background:
+          linear-gradient(rgba(15, 23, 42, 0.18) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(15, 23, 42, 0.18) 1px, transparent 1px),
+          linear-gradient(180deg, #0a1226 0%, #0b1120 100%);
+        background-size: 24px 24px, 24px 24px, auto;
+        overflow: hidden;
+      }
+      .sim-area::before,
+      .sim-area::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 1px;
+        background: rgba(148, 163, 184, 0.3);
+      }
+      .sim-area::after {
+        top: 50%;
+        height: 2px;
+      }
+      .arrow {
+        position: absolute;
+        top: 50%;
+        width: 18%;
+        height: 2px;
+        background: #f97316;
+        transform: translateY(-50%);
+      }
+      .arrow-label {
+        position: absolute;
+        top: calc(50% - 0.7rem);
+        font-size: 12px;
+        color: #fdba74;
+      }
+      .direction-arrow {
+        position: absolute;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        transform: translateY(-50%);
+        z-index: 4;
+      }
+      .top-right-tag {
+        position: absolute;
+        right: 18px;
+        top: 14px;
+        border: 1px solid #334155;
+        background: rgba(15, 23, 42, 0.75);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-family: "Times New Roman", serif;
+        font-size: 1.1rem;
+      }
+      .stats-bar {
+        position: absolute;
+        left: 18px;
+        top: 14px;
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: #cbd5e1;
+      }
+      .title-text {
+        position: absolute;
+        left: 18px;
+        top: 52px;
+        text-transform: uppercase;
+        letter-spacing: 0.35em;
+        font-size: 11px;
+        color: #64748b;
+      }
+      .block {
+        position: absolute;
+        left: 50%;
+        top: 58%;
+        width: 110px;
+        height: 80px;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(180deg, #60a5fa, #2563eb);
+        border: 1px solid rgba(191, 219, 254, 0.5);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+        z-index: 5;
+      }
+      .block span {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: white;
+        font-weight: 700;
+      }
+      .motion-label {
+        position: absolute;
+        left: 50%;
+        top: 73%;
+        transform: translateX(-50%);
+        background: rgba(15, 23, 42, 0.8);
+        color: #cbd5e1;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+      }
+      .footnote {
+        position: absolute;
+        right: 18px;
+        bottom: 14px;
+        display: flex;
+        gap: 12px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+      .controls-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        padding: 16px;
+      }
+      .control-card,
+      .metric-card,
+      .graph-card {
+        background: rgba(15, 23, 42, 0.72);
+        border: 1px solid #1e293b;
+        border-radius: 16px;
+        padding: 12px;
+      }
+      .control-header,
+      .metric-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: #94a3b8;
+      }
+      .metric-value {
+        margin-top: 6px;
+        font-family: monospace;
+        font-size: 1.2rem;
+      }
+      .button-row {
+        display: flex;
+        gap: 8px;
+        padding: 0 16px 16px;
+      }
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-play { background: #10b981; color: #0f172a; }
+      .btn-pause { background: #334155; color: #e2e8f0; }
+      .btn-reset { background: #0f172a; color: #e2e8f0; }
+      .metrics-row {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 0 16px 16px;
+      }
+      .graph-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        padding: 0 16px 16px;
+      }
+      canvas {
+        width: 100%;
+        height: 180px;
+        display: block;
+      }
+      @media (max-width: 768px) {
+        .controls-grid,
+        .metrics-row,
+        .graph-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="panel">
+        <section class="sim-area">
+          <div class="stats-bar">
+            <span id="net-force">F(net) = 0.0 N</span>
+            <span id="mass-stat">m = 0.0 kg</span>
+            <span id="accel-stat">a = 0.00 m/s²</span>
+          </div>
+          <div class="top-right-tag">F = ma</div>
+          <div class="title-text">Newton's Second Law</div>
+
+          <div class="arrow" style="left:0;"></div>
+          <div class="direction-arrow" id="force-arrow-left" style="left:18%; border-right:10px solid #f97316; display:none;"></div>
+          <div class="direction-arrow" id="force-arrow-right" style="left:18%; border-left:10px solid #f97316; display:none;"></div>
+          <div class="arrow-label" style="left:18%;">F</div>
+          <div class="arrow" style="right:0; background:#ef4444;"></div>
+          <div class="arrow-label" style="right:18%;">f</div>
+
+          <div style="position:absolute; left:12%; top:35%; width:52%; height:1px; border-top:1px dashed #34d399;"></div>
+          <div style="position:absolute; left:62%; top:35%; font-size:12px; color:#86efac;">a</div>
+
+          <div class="block" id="block" style="left:50%;">
+            <span>m</span>
+          </div>
+          <div class="motion-label" id="motion-label">Fnet = 0.0 N · a = 0.00 m/s²</div>
+          <div class="footnote">
+            <span id="velocity-text">v = 0.00 m/s</span>
+            <span id="position-text">x = 0.00 m</span>
+          </div>
+        </section>
+
+        <section class="controls-grid">
+          <div class="control-card">
+            <div class="control-header">
+              <span>Applied Force</span>
+              <span id="force-readout">18.0</span>
+            </div>
+            <input id="force-slider" type="range" min="-40" max="40" step="0.5" value="18" />
+          </div>
+          <div class="control-card">
+            <div class="control-header">
+              <span>Mass</span>
+              <span id="mass-readout">4.0</span>
+            </div>
+            <input id="mass-slider" type="range" min="1" max="12" step="0.1" value="4" />
+          </div>
+          <div class="control-card">
+            <div class="control-header">
+              <span>Friction</span>
+              <span id="friction-readout">6.0</span>
+            </div>
+            <input id="friction-slider" type="range" min="0" max="40" step="0.5" value="6" />
+          </div>
+          <div class="control-card">
+            <div class="control-header">
+              <span>Acceleration</span>
+              <span id="acceleration-readout">3.0</span>
+            </div>
+            <input id="acceleration-slider" type="range" min="-12" max="12" step="0.1" value="3" />
+          </div>
+        </section>
+
+        <div class="button-row">
+          <button class="btn-play" id="play-btn">Play</button>
+          <button class="btn-pause" id="pause-btn">Pause</button>
+          <button class="btn-reset" id="reset-btn">Reset</button>
+        </div>
+
+        <section class="metrics-row">
+          <div class="metric-card">
+            <div class="metric-label">Fnet</div>
+            <div class="metric-value" id="fnet-metric">0.00 N</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">mass</div>
+            <div class="metric-value" id="mass-metric">0.00 kg</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">accel</div>
+            <div class="metric-value" id="accel-metric">0.00 m/s²</div>
+          </div>
+        </section>
+
+        <section class="graph-grid">
+          <div class="graph-card">
+            <div class="metric-label">s/t</div>
+            <canvas id="graph-s"></canvas>
+          </div>
+          <div class="graph-card">
+            <div class="metric-label">v/t</div>
+            <canvas id="graph-v"></canvas>
+          </div>
+          <div class="graph-card">
+            <div class="metric-label">a/t</div>
+            <canvas id="graph-a"></canvas>
+          </div>
+          <div class="graph-card">
+            <div class="metric-label">F/t</div>
+            <canvas id="graph-f"></canvas>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+      const block = document.getElementById('block');
+      const forceSlider = document.getElementById('force-slider');
+      const massSlider = document.getElementById('mass-slider');
+      const frictionSlider = document.getElementById('friction-slider');
+      const accelerationSlider = document.getElementById('acceleration-slider');
+      const forceReadout = document.getElementById('force-readout');
+      const massReadout = document.getElementById('mass-readout');
+      const frictionReadout = document.getElementById('friction-readout');
+      const accelerationReadout = document.getElementById('acceleration-readout');
+      const netForceText = document.getElementById('net-force');
+      const massStat = document.getElementById('mass-stat');
+      const accelStat = document.getElementById('accel-stat');
+      const motionLabel = document.getElementById('motion-label');
+      const velocityText = document.getElementById('velocity-text');
+      const positionText = document.getElementById('position-text');
+      const fnetMetric = document.getElementById('fnet-metric');
+      const massMetric = document.getElementById('mass-metric');
+      const accelMetric = document.getElementById('accel-metric');
+      const forceArrowLeft = document.getElementById('force-arrow-left');
+      const forceArrowRight = document.getElementById('force-arrow-right');
+      const playBtn = document.getElementById('play-btn');
+      const pauseBtn = document.getElementById('pause-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const graphEls = {
+        s: document.getElementById('graph-s'),
+        v: document.getElementById('graph-v'),
+        a: document.getElementById('graph-a'),
+        f: document.getElementById('graph-f')
+      };
+      const state = {
+        appliedForce: 18,
+        mass: 4,
+        frictionForce: 6,
+        customAcceleration: 3,
+        time: 0,
+        position: 0,
+        velocity: 0,
+        acceleration: 0,
+        netForce: 0,
+        isPlaying: false,
+        history: []
+      };
+      const maxHistory = 180;
+      let lastFrame = 0;
+      let animationFrame = 0;
+
+      function computeValues() {
+        const safeMass = Math.max(state.mass, 0.1);
+        const forceSign = state.appliedForce >= 0 ? 1 : -1;
+        const frictionBound = Math.min(state.frictionForce, Math.abs(state.appliedForce));
+        const derivedNetForce = state.appliedForce - forceSign * frictionBound;
+        const derivedAcceleration = derivedNetForce / safeMass;
+
+        state.netForce = derivedNetForce;
+        state.acceleration = state.customAcceleration;
+        if (state.acceleration === undefined || Number.isNaN(state.acceleration)) {
+          state.acceleration = derivedAcceleration;
+        }
+        state.netForce = state.acceleration * safeMass;
+        return { safeMass, frictionBound, derivedAcceleration };
+      }
+
+      function updateUI() {
+        const { safeMass, frictionBound } = computeValues();
+        forceReadout.textContent = state.appliedForce.toFixed(1);
+        massReadout.textContent = state.mass.toFixed(1);
+        frictionReadout.textContent = frictionBound.toFixed(1);
+        accelerationReadout.textContent = state.customAcceleration.toFixed(1);
+        netForceText.textContent = `F(net) = ${state.netForce.toFixed(1)} N`;
+        massStat.textContent = `m = ${safeMass.toFixed(1)} kg`;
+        accelStat.textContent = `a = ${state.acceleration.toFixed(2)} m/s²`;
+        motionLabel.textContent = `Fnet = ${state.netForce.toFixed(1)} N · a = ${state.acceleration.toFixed(2)} m/s²`;
+        velocityText.textContent = `v = ${state.velocity.toFixed(2)} m/s`;
+        positionText.textContent = `x = ${state.position.toFixed(2)} m`;
+        fnetMetric.textContent = `${state.netForce.toFixed(2)} N`;
+        massMetric.textContent = `${safeMass.toFixed(2)} kg`;
+        accelMetric.textContent = `${state.acceleration.toFixed(2)} m/s²`;
+
+        if (state.appliedForce > 0) {
+          forceArrowRight.style.display = 'block';
+          forceArrowLeft.style.display = 'none';
+        } else if (state.appliedForce < 0) {
+          forceArrowRight.style.display = 'none';
+          forceArrowLeft.style.display = 'block';
+        } else {
+          forceArrowRight.style.display = 'none';
+          forceArrowLeft.style.display = 'none';
+        }
+
+        const motionScale = 1.6;
+        const leftPercent = clamp(50 + state.position * motionScale, 18, 78);
+        block.style.left = `${leftPercent}%`;
+      }
+
+      function resetSimulation() {
+        state.isPlaying = false;
+        state.time = 0;
+        state.position = 0;
+        state.velocity = 0;
+        state.history = [];
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        lastFrame = 0;
+        updateUI();
+        drawAllGraphs();
+      }
+
+      function pushHistory() {
+        state.history.push({
+          time: state.time,
+          s: state.position,
+          v: state.velocity,
+          a: state.acceleration,
+          F: state.netForce
+        });
+        if (state.history.length > maxHistory) {
+          state.history.shift();
+        }
+      }
+
+      function drawGraph(canvas, values, color, label) {
+        const ctx = canvas.getContext('2d');
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= 10; x++) {
+          const px = (x / 10) * width;
+          ctx.moveTo(px, 0);
+          ctx.lineTo(px, height);
+        }
+        for (let y = 0; y <= 6; y++) {
+          const py = (y / 6) * height;
+          ctx.moveTo(0, py);
+          ctx.lineTo(width, py);
+        }
+        ctx.stroke();
+
+        if (!values.length) return;
+
+        const maxValue = Math.max(...values.map(v => Math.abs(v)), 1);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        values.forEach((value, index) => {
+          const x = (index / Math.max(values.length - 1, 1)) * width;
+          const y = height - (value / maxValue) * (height * 0.8) - height * 0.1;
+          if (index === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(label, 8, 14);
+      }
+
+      function drawAllGraphs() {
+        const points = state.history;
+        drawGraph(graphEls.s, points.map((p) => p.s), '#38bdf8', 's');
+        drawGraph(graphEls.v, points.map((p) => p.v), '#22c55e', 'v');
+        drawGraph(graphEls.a, points.map((p) => p.a), '#86efac', 'a');
+        drawGraph(graphEls.f, points.map((p) => p.F), '#f97316', 'F');
+      }
+
+      function animate(timestamp) {
+        if (!state.isPlaying) return;
+        if (!lastFrame) lastFrame = timestamp;
+        const dt = Math.min((timestamp - lastFrame) / 1000, 0.03);
+        lastFrame = timestamp;
+
+        computeValues();
+        state.velocity += state.acceleration * dt;
+        state.position += state.velocity * dt;
+        state.time += dt;
+        pushHistory();
+
+        updateUI();
+        drawAllGraphs();
+        animationFrame = requestAnimationFrame(animate);
+      }
+
+      playBtn.addEventListener('click', () => {
+        state.isPlaying = true;
+        if (!animationFrame) {
+          lastFrame = 0;
+          animationFrame = requestAnimationFrame(animate);
+        }
+      });
+      pauseBtn.addEventListener('click', () => {
+        state.isPlaying = false;
+      });
+      resetBtn.addEventListener('click', resetSimulation);
+      forceSlider.addEventListener('input', (e) => {
+        state.appliedForce = Number(e.target.value);
+        updateUI();
+      });
+      massSlider.addEventListener('input', (e) => {
+        state.mass = Number(e.target.value);
+        updateUI();
+      });
+      frictionSlider.addEventListener('input', (e) => {
+        state.frictionForce = Number(e.target.value);
+        updateUI();
+      });
+      accelerationSlider.addEventListener('input', (e) => {
+        state.customAcceleration = Number(e.target.value);
+        updateUI();
+      });
+      window.addEventListener('resize', drawAllGraphs);
+
+      computeValues();
+      updateUI();
+      drawAllGraphs();
+    </script>
+  </body>
+</html>
